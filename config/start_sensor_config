@@ -47,14 +47,14 @@
       parent = child3
       order = 1
       profile = default
-      command = cd ~/catkin_ws; bash
+      command = cd ~/ws_uav_setup; bash
       uuid = 7c9c1a40-3832-438e-b949-1d90b87149a6
     [[[terminal6]]]
       type = Terminal
       parent = child2
       order = 1
       profile = default
-      command = cd ~/catkin_ws; bash
+      command = cd ~/ws_uav_setup; bash
       uuid = 757e52ad-b29f-448c-8e02-7c0e36809012
     [[[child7]]]
       type = HPaned
@@ -73,7 +73,7 @@
       parent = child8
       order = 0
       profile = default
-      command = cd ~/catkin_ws; bash
+      command = cd ~/ws_uav_setup; bash
       uuid = ff0ce2db-0b97-4efb-8246-241db380f4d3
     [[[terminal10]]]
       type = Terminal
@@ -86,6 +86,6 @@
       parent = child7
       order = 1
       profile = default
-      command = cd ~/catkin_ws; bash
+      command = cd ~/ws_uav_setup; bash
       uuid = e23005a7-fa97-44dc-9b88-eeb162817748
 [plugins]

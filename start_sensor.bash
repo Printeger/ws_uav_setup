@@ -1,5 +1,5 @@
 #!/bin/bash
 
-cp ~/catkin_ws/start_sensor_config ~/.config/terminator/config
+cp ~/ws_uav_setup/config/start_sensor_config ~/.config/terminator/config
 
 terminator
