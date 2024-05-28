@@ -1,0 +1,9 @@
+[submodule "src/utils/protocol_extracter"]
+	path = src/utils/protocol_extracter
+	url = https://github.com/nooploop-dev/protocol_extracter.git
+[submodule "src/utils/nlink_unpack"]
+	path = src/utils/nlink_unpack
+	url = https://github.com/nooploop-dev/nlink_unpack.git
+[submodule "extern/serial"]
+	path = extern/serial
+	url = https://github.com/wjwwood/serial.git
