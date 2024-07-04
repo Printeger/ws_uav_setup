@@ -19,6 +19,7 @@ typedef struct {
   uint32_t local_time;
   uint32_t system_time;
   float voltage;
+  uint64_t timestamp_ns;
 } nlt_tagframe0_result_t;
 
 typedef struct {

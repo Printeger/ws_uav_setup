@@ -1,6 +1,6 @@
 #pragma once
 
-#include <realsense2_camera/base_realsense_node.h>
+#include <base_realsense_node.h>
 
 namespace realsense2_camera
 {

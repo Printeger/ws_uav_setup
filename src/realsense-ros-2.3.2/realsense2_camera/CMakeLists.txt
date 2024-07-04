@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(realsense2_camera)
+add_compile_options(-std=c++11)
 
 option(BUILD_WITH_OPENMP "Use OpenMP" OFF)
 option(SET_USER_BREAK_AT_STARTUP "Set user wait point in startup (for debug)" OFF)
@@ -61,7 +62,7 @@ endif()
 
 if (WIN32)
 else()
-set(CMAKE_CXX_FLAGS "-fPIE -fPIC -D_FORTIFY_SOURCE=2 -fstack-protector -Wformat -Wformat-security -Wall ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "-fPIE -fPIC -std=c++11 -D_FORTIFY_SOURCE=2 -fstack-protector -Wformat -Wformat-security -Wall ${CMAKE_CXX_FLAGS}")
 endif()
 
 add_message_files(
@@ -91,7 +92,6 @@ include_directories(
 
 # RealSense ROS Node
 catkin_package(
-    INCLUDE_DIRS include
     LIBRARIES ${PROJECT_NAME}
     CATKIN_DEPENDS message_runtime roscpp sensor_msgs std_msgs
     nodelet
@@ -102,10 +102,10 @@ catkin_package(
     )
 
 add_library(${PROJECT_NAME}
-    include/realsense2_camera/constants.h
-    include/realsense2_camera/realsense_node_factory.h
-    include/realsense2_camera/base_realsense_node.h
-    include/realsense2_camera/t265_realsense_node.h
+    include/constants.h
+    include/realsense_node_factory.h
+    include/base_realsense_node.h
+    include/t265_realsense_node.h
     src/realsense_node_factory.cpp
     src/base_realsense_node.cpp
     src/t265_realsense_node.cpp
@@ -140,7 +140,7 @@ install(TARGETS ${PROJECT_NAME}
     )
 
 # Install header files
-install(DIRECTORY include/realsense2_camera
+install(DIRECTORY include/
     DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
     )
 

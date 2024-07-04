@@ -69,11 +69,17 @@ void Init::initAnchorFrame0(NProtocolExtracter *protocol_extraction) {
           nh_.advertise<nlink_parser::LinktrackAnchorframe0>(topic, 200);
       TopicAdvertisedTip(topic);
     }
+
+    auto now = std::chrono::system_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch());
+    uint64_t unix_timestamp = duration.count();
+    g_msg_anchorframe0.local_time = unix_timestamp;
+
     auto data = nlt_anchorframe0_.result;
     g_msg_anchorframe0.role = data.role;
     g_msg_anchorframe0.id = data.id;
     g_msg_anchorframe0.voltage = data.voltage;
-    g_msg_anchorframe0.local_time = data.local_time;
+    // g_msg_anchorframe0.local_time = data.local_time;
     g_msg_anchorframe0.system_time = data.system_time;
     auto &msg_nodes = g_msg_anchorframe0.nodes;
     msg_nodes.clear();
@@ -104,9 +110,12 @@ void Init::initTagFrame0(NProtocolExtracter *protocol_extraction) {
     const auto &data = g_nlt_tagframe0.result;
     auto &msg_data = g_msg_tagframe0;
 
+    auto now = std::chrono::system_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch());
+    uint64_t unix_timestamp = duration.count();
     msg_data.role = data.role;
     msg_data.id = data.id;
-    msg_data.local_time = data.local_time;
+    msg_data.local_time = unix_timestamp;
     msg_data.system_time = data.system_time;
     msg_data.voltage = data.voltage;
     ARRAY_ASSIGN(msg_data.pos_3d, data.pos_3d)
@@ -168,9 +177,14 @@ void Init::initNodeFrame1(NProtocolExtracter *protocol_extraction) {
     auto &msg_data = g_msg_nodeframe1;
     auto &msg_nodes = msg_data.nodes;
 
+    auto now = std::chrono::system_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch());
+    uint64_t unix_timestamp = duration.count();
+    msg_data.local_time = unix_timestamp;
+
     msg_data.role = data.role;
     msg_data.id = data.id;
-    msg_data.local_time = data.local_time;
+    // msg_data.local_time = data.local_time;
     msg_data.system_time = data.system_time;
     msg_data.voltage = data.voltage;
 
@@ -201,11 +215,9 @@ void Init::initNodeFrame2(NProtocolExtracter *protocol_extraction) {
     auto &msg_data = g_msg_nodeframe2;
     auto &msg_nodes = msg_data.nodes;
 
-    std::chrono::milliseconds ms =
-        std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch());
-    // 将时间戳转换为19位
-    uint64_t unix_timestamp = ms.count() * 1000;
+    auto now = std::chrono::system_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch());
+    uint64_t unix_timestamp = duration.count();
 
     msg_data.role = data.role;
     msg_data.id = data.id;
@@ -250,9 +262,14 @@ void Init::initNodeFrame3(NProtocolExtracter *protocol_extraction) {
     auto &msg_data = g_msg_nodeframe3;
     auto &msg_nodes = msg_data.nodes;
 
+    auto now = std::chrono::system_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch());
+    uint64_t unix_timestamp = duration.count();
+
     msg_data.role = data.role;
     msg_data.id = data.id;
-    msg_data.local_time = data.local_time;
+    msg_data.local_time = unix_timestamp;
+    // msg_data.local_time = data.local_time;
     msg_data.system_time = data.system_time;
     msg_data.voltage = data.voltage;
 
@@ -281,11 +298,17 @@ void Init::initNodeFrame4(NProtocolExtracter *protocol_extraction) {
           nh_.advertise<nlink_parser::LinktrackNodeframe4>(topic, 200);
       TopicAdvertisedTip(topic);
     }
+
+    auto now = std::chrono::system_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch());
+    uint64_t unix_timestamp = duration.count();
+
     const auto &data = g_nlt_nodeframe4.result;
     auto &msg_data = g_msg_nodeframe4;
     msg_data.role = data.role;
     msg_data.id = data.id;
-    msg_data.local_time = data.local_time;
+    msg_data.local_time = unix_timestamp;
+    // msg_data.local_time = data.local_time;
     msg_data.system_time = data.system_time;
     msg_data.voltage = data.voltage;
     msg_data.tags.resize(data.tag_count);
@@ -321,9 +344,14 @@ void Init::initNodeFrame5(NProtocolExtracter *protocol_extraction) {
     auto &msg_data = g_msg_nodeframe5;
     auto &msg_nodes = msg_data.nodes;
 
+    auto now = std::chrono::system_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch());
+    uint64_t unix_timestamp = duration.count();
+    msg_data.local_time = unix_timestamp;
+
     msg_data.role = data.role;
     msg_data.id = data.id;
-    msg_data.local_time = data.local_time;
+    // msg_data.local_time = data.local_time;
     msg_data.system_time = data.system_time;
     msg_data.voltage = data.voltage;
 

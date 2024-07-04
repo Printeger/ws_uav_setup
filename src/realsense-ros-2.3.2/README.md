@@ -3,7 +3,7 @@ These are packages for using Intel RealSense cameras (D400 series SR300 camera a
 
 This version supports Kinetic, Melodic and Noetic distributions.
 
-For running in ROS2 environment please switch to the [ros2-development branch](https://github.com/IntelRealSense/realsense-ros/tree/ros2-development). </br>
+For running in ROS2 environment please switch to the [ros2 branch](https://github.com/IntelRealSense/realsense-ros/tree/ros2). </br>
 
 LibRealSense2 supported version: v2.50.0 (see [realsense2_camera release notes](https://github.com/IntelRealSense/realsense-ros/releases))
 
@@ -31,7 +31,7 @@ LibRealSense2 supported version: v2.50.0 (see [realsense2_camera release notes](
     This will install both realsense2_camera and its dependents, including librealsense2 library and matching udev-rules.
 
     Notice:
-    * The version of librealsense2 is almost always behind the one available in the RealSense&trade; official repository.
+    * The version of librealsense2 is almost always behind the one availeable in RealSense&trade; official repository.
     * librealsense2 is not built to use native v4l2 driver but the less stable RS-USB protocol. That is because the last is more general and operational on a larger variety of platforms.
     * realsense2_description is available as a separate debian package of ROS distribution. It includes the 3D-models of the devices and is necessary for running launch files that include these models (i.e. rs_d435_camera_with_model.launch). It can be installed by typing:
     `sudo apt-get install ros-$ROS_DISTRO-realsense2-description`
@@ -41,7 +41,7 @@ LibRealSense2 supported version: v2.50.0 (see [realsense2_camera release notes](
     **Chocolatey distribution Coming soon**
 
 * ### Method 2: The RealSense&trade; distribution:
-     > This option is demonstrated in the [.travis.yml](https://github.com/intel-ros/realsense/blob/ros1-legacy/.travis.yml) file. It basically summerize the elaborate instructions in the following 2 steps:
+     > This option is demonstrated in the [.travis.yml](https://github.com/intel-ros/realsense/blob/development/.travis.yml) file. It basically summerize the elaborate instructions in the following 2 steps:
 
 
    ### Step 1: Install the latest Intel&reg; RealSense&trade; SDK 2.0
@@ -209,7 +209,7 @@ Setting *unite_imu_method* creates a new topic, *imu*, that replaces the default
 ### Available services:
 - reset : Cause a hardware reset of the device. Usage: `rosservice call /camera/realsense2_camera/reset`
 - enable : Start/Stop all streaming sensors. Usage example: `rosservice call /camera/enable False"`
-- device_info : retrieve information about the device - serial_number, firmware_version etc. Type `rosservice type /camera/realsense2_camera/device_info | rossrv show` for the full list. Call example: `rosservice call /camera/realsense2_camera/device_info`
+- device_info : retrieve information about the device - serial_number, firmware_version etc. Type `osservice type /camera/realsense2_camera/device_info | rossrv show` for the full list. Call example: `rosservice call /camera/realsense2_camera/device_info`
 
 ### Point Cloud
 Here is an example of how to start the camera node and make it publish the point cloud using the pointcloud option.

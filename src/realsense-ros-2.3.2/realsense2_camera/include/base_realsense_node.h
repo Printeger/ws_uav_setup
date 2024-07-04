@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "realsense2_camera/realsense_node_factory.h"
+#include "../include/realsense_node_factory.h"
 #include <realsense2_camera/DeviceInfo.h>
 #include "realsense2_camera/Metadata.h"
 #include <ddynamic_reconfigure/ddynamic_reconfigure.h>
@@ -227,7 +227,7 @@ namespace realsense2_camera
                           std::map<stream_index_pair, sensor_msgs::CameraInfo>& camera_info,
                           const std::map<rs2_stream, std::string>& encoding,
                           bool copy_data_from_frame = true);
-        void publishMetadata(rs2::frame f, const ros::Time& header_time, const std::string& frame_id);
+        void publishMetadata(rs2::frame f, const std::string& frame_id);
         bool getEnabledProfile(const stream_index_pair& stream_index, rs2::stream_profile& profile);
 
         void publishAlignedDepthToOthers(rs2::frameset frames, const ros::Time& t);
