@@ -65,6 +65,30 @@ namespace gnss_comm
         return 0;
     }
 
+    //  satellite number to satellite id --sbs
+    /* satellite number to satellite id --------------------------------------------
+    * convert satellite number to satellite id
+    * args   : int    sat       I   satellite number
+    *          char   *id       O   satellite id (Gnn,Rnn,Enn,Jnn,Cnn)
+    * return : success or failure (0:error)
+    *-----------------------------------------------------------------------------*/
+    uint32_t sat_id(uint32_t sat, char *id)
+    {
+        uint32_t prn;
+        switch (satsys(sat,&prn)) {
+            case SYS_GPS: sprintf(id,"G%02d",prn-MIN_PRN_GPS+1); return 0;
+            case SYS_GLO: sprintf(id,"R%02d",prn-MIN_PRN_GLO+1); return 0;
+            case SYS_GAL: sprintf(id,"E%02d",prn-MIN_PRN_GAL+1); return 0;
+            // case SYS_QZS: sprintf(id,"J%02d",prn-MIN_PRN_QZS+1); return;
+            case SYS_BDS: sprintf(id,"C%02d",prn-MIN_PRN_BDS+1); return 0;
+            // case SYS_SBS: sprintf(id,"%03d" ,prn); return;
+        }
+        strcpy(id,"");
+        return -1;
+    }
+
+
+
     /* satellite number to satellite system ----------------------------------------
     * convert satellite number to satellite system
     * args   : uint32_t    sat       I   satellite number (1-MAXSAT)
@@ -201,6 +225,9 @@ namespace gnss_comm
         if (week) *week = w;
         return (double)(sec - w*86400*7) + t.sec;
     }
+
+
+
     /* beidou time (bdt) to time ---------------------------------------------------
     * convert week and tow in beidou time (bdt) to gtime_t struct
     * args   : int    week      I   week number in bdt
@@ -230,6 +257,33 @@ namespace gnss_comm
         
         if (week) *week = w;
         return (double)(sec - w*86400*7) + t.sec;
+    }
+
+    /* gpstime to bdt --------------------------------------------------------------
+    * convert gpstime to bdt (beidou navigation satellite system time)
+    * args   : gtime_t t        I   time expressed in gpstime
+    * return : time expressed in bdt
+    * notes  : ref [8] 3.3, 2006/1/1 00:00 BDT = 2006/1/1 00:00 UTC
+    *          no leap seconds in BDT
+    *          ignore slight time offset under 100 ns
+    *-----------------------------------------------------------------------------*/
+    gtime_t gpst2bdt(gtime_t t)
+    {
+        return timeadd(t,-14.0);
+    }
+
+    /* add time --------------------------------------------------------------------
+    * add time to gtime_t struct
+    * args   : gtime_t t        I   gtime_t struct
+    *          double sec       I   time to add (s)
+    * return : gtime_t struct (t+sec)
+    *-----------------------------------------------------------------------------*/
+    gtime_t timeadd(gtime_t t, double sec)
+    {
+        double tt;
+
+        t.sec+=sec; tt=floor(t.sec); t.time+=(int)tt; t.sec-=tt;
+        return t;
     }
 
     /* gpstime to utc --------------------------------------------------------------

@@ -42,9 +42,16 @@ UbloxMessageProcessor::UbloxMessageProcessor(ros::NodeHandle& nh) :
     pub_lla_ = nh_.advertise<sensor_msgs::NavSatFix>("receiver_lla", 100);
     pub_tp_info_ = nh_.advertise<GnssTimePulseInfoMsg>("time_pulse_info", 100);
     pub_range_meas_ = nh_.advertise<GnssMeasMsg>("range_meas", 100);
-    pub_ephem_ = nh_.advertise<GnssEphemMsg>("ephem", 100);
-    pub_glo_ephem_ = nh_.advertise<GnssGloEphemMsg>("glo_ephem", 100);
+    // pub_rover_ = nh_.advertise<GnssObservations>("ipnl/gnss_rover/observations", 100);
+    pub_ori_ephem_ = nh_.advertise<GnssEphemMsg>("ephem", 100);
+    pub_ori_glo_ephem_ = nh_.advertise<GnssGloEphemMsg>("glo_ephem", 100);
+    // pub_ephem_ = nh_.advertise<GnssEphemerides>("ipnl/gnss_ephemeris/ephemerides", 100);
+
+    pub_ephem_array = nh_.advertise<GnssEphemMsgarray>("gnssephemarray", 100);
+
     pub_iono_ = nh_.advertise<StampedFloat64Array>("iono_params", 100);
+
+    ephem_timer_ = nh_.createTimer(ros::Duration(4.0), &UbloxMessageProcessor::ephemTimerCallback, this);
 }
 
 void UbloxMessageProcessor::process_data(const uint8_t *data, size_t len)
@@ -60,6 +67,9 @@ void UbloxMessageProcessor::process_data(const uint8_t *data, size_t len)
         if (meas.empty())   return;
         GnssMeasMsg meas_msg = meas2msg(meas);
         pub_range_meas_.publish(meas_msg);
+        // GnssObservations obs_msg = meas2msg_ipnl(meas);
+        // pub_rover_.publish(obs_msg);
+
         return;
     }
     else if (msg_type == UBX_RXMSFRBX_ID)
@@ -68,17 +78,88 @@ void UbloxMessageProcessor::process_data(const uint8_t *data, size_t len)
         EphemBasePtr ephem = parse_subframe(data, len, iono_params);
         if (ephem && ephem->ttr.time!=0)
         {
+            std::lock_guard<std::mutex> lock(ephem_mutex_);
             if (satsys(ephem->sat, NULL) == SYS_GLO)
             {
-                GnssGloEphemMsg glo_ephem_msg = glo_ephem2msg(std::dynamic_pointer_cast<GloEphem>(ephem));
-                pub_glo_ephem_.publish(glo_ephem_msg);
+                // GnssGloEphemMsg glo_ephem_msg = glo_ephem2msg(std::dynamic_pointer_cast<GloEphem>(ephem));
+                // pub_glo_ephem_.publish(glo_ephem_msg);
+
+                GnssGloEphemMsg glo_ephem_msg_a = glo_ephem2msg(std::dynamic_pointer_cast<GloEphem>(ephem));
+                // GlonassEphemeris glo_ephem_msg = glo_ephem2msg_ipnl(std::dynamic_pointer_cast<GloEphem>(ephem));
+
+                // for(auto iter = ephemerides_.glonass_ephemerides.begin(); 
+                //     iter != ephemerides_.glonass_ephemerides.end(); )
+                // {
+                //     if (iter->prn == glo_ephem_msg.prn)
+                //     {
+                //         iter = ephemerides_.glonass_ephemerides.erase(iter);
+                //         break;
+                //     }
+                //     else
+                //     {
+                //         ++iter;
+                //     }
+                // }
+
+                for(auto iter = ephemarray_.gloephem.begin(); 
+                    iter != ephemarray_.gloephem.end(); )
+                {
+                    if (iter->sat == glo_ephem_msg_a.sat)
+                    {
+                        iter = ephemarray_.gloephem.erase(iter);
+                        break;
+                    }
+                    else
+                    {
+                        ++iter;
+                    }
+                }
+
+                //ephemerides_.glonass_ephemerides.push_back(glo_ephem_msg);
+                ephemarray_.gloephem.push_back(glo_ephem_msg_a);
             }
             else
             {
-                GnssEphemMsg ephem_msg = ephem2msg(std::dynamic_pointer_cast<Ephem>(ephem));
-                pub_ephem_.publish(ephem_msg);
+                GnssEphemMsg glo_ephem_msg_a = ephem2msg(std::dynamic_pointer_cast<Ephem>(ephem));
+                // pub_ephem_.publish(ephem_msg);
+                // GnssEphemeris ephemeris_msg = ephem2msg_ipnl(std::dynamic_pointer_cast<Ephem>(ephem));
+
+                // for(auto iter = ephemerides_.ephemerides.begin(); 
+                //     iter != ephemerides_.ephemerides.end(); )
+                // {
+                //     if (iter->prn == ephemeris_msg.prn)
+                //     {
+                //         iter = ephemerides_.ephemerides.erase(iter);
+                //         break;
+                //     }
+                //     else
+                //     {
+                //         ++iter;
+                //     }
+                // }
+                // ephemerides_.ephemerides.push_back(ephemeris_msg);
+
+                for(auto iter = ephemarray_.ephem.begin(); 
+                    iter != ephemarray_.ephem.end(); )
+                {
+                    if (iter->sat == glo_ephem_msg_a.sat)
+                    {
+                        iter = ephemarray_.ephem.erase(iter);
+                        break;
+                    }
+                    else
+                    {
+                        ++iter;
+                    }
+                }
+
+                ephemarray_.ephem.push_back(glo_ephem_msg_a);
             }
+            //std::cout<<"ephemerides_.ephemerides.size() = "<<ephemerides_.ephemerides.size()<<std::endl;
+            //pub_ephem_.publish(ephemerides_);
+            pub_ephem_array.publish(ephemarray_);
         }
+        
         if (iono_params.size() == 8)
         {
             // publish ionosphere parameters
@@ -125,13 +206,6 @@ void UbloxMessageProcessor::process_data(const uint8_t *data, size_t len)
         lla_msg.latitude    = pvt_soln->lat;
         lla_msg.longitude   = pvt_soln->lon;
         lla_msg.altitude    = pvt_soln->hgt;
-        // revise the covariance
-        lla_msg.position_covariance[0] = pvt_soln->h_acc; 
-        lla_msg.position_covariance[4] = pvt_soln->h_acc;
-        lla_msg.position_covariance[8] = pvt_soln->v_acc;
-        lla_msg.position_covariance_type =
-      sensor_msgs::NavSatFix::COVARIANCE_TYPE_DIAGONAL_KNOWN;
-
         lla_msg.status.status = static_cast<int8_t>(pvt_soln->fix_type);
         lla_msg.status.service = static_cast<uint16_t>(pvt_soln->carr_soln);
         pub_lla_.publish(lla_msg);
@@ -139,6 +213,30 @@ void UbloxMessageProcessor::process_data(const uint8_t *data, size_t len)
     }
     // unsupported message reach here
     return;
+}
+
+
+void UbloxMessageProcessor::ephemTimerCallback(const ros::TimerEvent&)
+{
+    std::lock_guard<std::mutex> lock(ephem_mutex_);
+
+    // 检查ephemarray_.ephem是否有数据
+    if (!ephemarray_.ephem.empty())
+    {
+        for (const auto& ephem : ephemarray_.ephem)
+        {
+            pub_ori_ephem_.publish(ephem);
+        }
+    }
+
+    // 检查ephemarray_.gloephem是否有数据
+    if (!ephemarray_.gloephem.empty())
+    {
+        for (const auto& glo_ephem : ephemarray_.gloephem)
+        {
+            pub_ori_glo_ephem_.publish(glo_ephem);
+        }
+    }
 }
 
 int UbloxMessageProcessor::check_ack(const uint8_t *data, size_t len)
@@ -323,7 +421,7 @@ std::vector<ObsPtr> UbloxMessageProcessor::parse_meas_msg(const uint8_t *msg_dat
         float dopp = *reinterpret_cast<const float*>(p+16);
         uint8_t gnss_id = p[20];
         uint8_t svid = p[21];
-        uint8_t sig_id = p[22];
+        uint8_t sig_id = U1(p+22);
         uint8_t freq_id = p[23];
         uint16_t lock_time = *reinterpret_cast<const uint16_t*>(p+24);
         uint8_t cn0 = p[26];
@@ -347,6 +445,8 @@ std::vector<ObsPtr> UbloxMessageProcessor::parse_meas_msg(const uint8_t *msg_dat
         }
         int code = ubx_sig(sys, sig_id);
         int sid = sig_idx(sys, code);       // signal index in obs data
+        //int sid = sig_idx_ipnl( sys, code);   //--sbs
+
         if (sid == 0 || sid > N_FREQ)
         {
             LOG(ERROR) << "ubx rxmrawx signal error: sat=" << sat << " signal_id=" << sid;
@@ -825,11 +925,13 @@ int UbloxMessageProcessor::decode_GAL_subframe(const uint8_t *msg_data, const ui
     uint8_t buff[32],crc_buff[26]={0};
     int i,j,k,part1,page1,part2,page2,type;
     
-    if (msg_len < 52)      // header(6) + payload_1(8) + payload_2(36) + checksum(2)
+    // if (msg_len < 52)      // header(6) + payload_1(8) + payload_2(36) + checksum(2)
+    if (msg_len < 48)      // header(6) + payload_1(8) + payload_2(36) + checksum(2)   --sbs
     {
         LOG(ERROR) << "ubx rxmsfrbx length error: sat=" << sat2str(ephem->sat) << " len=" << msg_len;
         return -1;
     }
+    if (msg_len < 44) return 0; /* E5b I/NAV */  //--sbs
     for (i=k=0;i<8;i++,p+=4) 
         for (j=0;j<4;j++) 
             buff[k++]=p[3-j];
@@ -1011,7 +1113,7 @@ int UbloxMessageProcessor::decode_GPS_subframe(const uint8_t *msg_data, const ui
     
     // now set bits to subframe buffer
     for (size_t i = 0; i < 10; i++)
-        setbitu(subfrm[ephem->sat]+subframe_pos, 24*i, 24, words[i]);
+        setbitu(subfrm[ephem->sat-1]+subframe_pos, 24*i, 24, words[i]);
     
     if (subframe_id == 3)
         decode_GPS_ephem(ephem);
@@ -1020,7 +1122,7 @@ int UbloxMessageProcessor::decode_GPS_subframe(const uint8_t *msg_data, const ui
 
 int UbloxMessageProcessor::decode_GPS_ephem(EphemPtr ephem)
 {
-    uint8_t *frame_buf = subfrm[ephem->sat];
+    uint8_t *frame_buf = subfrm[ephem->sat-1];
     // check if subframe1,2,3 are received or not
     for (uint32_t i = 0; i < 3; ++i)
     {
@@ -1306,6 +1408,74 @@ double UbloxMessageProcessor::sig_freq(const int sys, const int sid, const int f
     return LIGHT_SPEED/lam_carr[sid-1];
 }
 
+
+// int UbloxMessageProcessor::sig_idx_ipnl( int sys,  int code)
+// {
+//     if (sys == SYS_GPS) {
+//         int phase_id = getPhaseID('G', code);
+//         // std::cout<<"phase_id(G): "<<phase_id<<";   code:"<<code <<std::endl;
+//         switch (phase_id) {
+//             case 1:  return 1; /* L1 */
+//             case 2:  return 2; /* L2 */
+//             // case '5':  return 3; /* L5 */
+//         }
+//     }
+//     else if (sys == SYS_GLO) {
+//         int phase_id = getPhaseID('R', code);
+//         // std::cout<<"phase_id(R): "<<phase_id<<";   code:"<<code <<std::endl;
+
+//         switch (phase_id) {
+//             case 1:  return 1; /* G1 */
+//             case 2:  return 2; /* G2 */
+//             case 3:  return 3; /* G3 */
+//             // case 4:  return 1; /* G1a */
+//             // case 6:  return 2; /* G2a */
+//         }
+//     }
+//     else if (sys == SYS_GAL) {
+//         int phase_id = getPhaseID('E', code);
+//         // std::cout<<"phase_id(E): "<<phase_id<<";   code:"<<code <<std::endl;
+
+//         switch (phase_id) {
+//             case 1:  return 1; /* E1 */
+//             case 3: return 2; /* E5b */
+//             // case '5':  return 3; /* E5a */
+//             // case '6':  return 4; /* E6 */
+//             // case '8':  return 5; /* E5ab */
+//         }
+//     }
+//     // else if (sys == SYS_QZS) {
+//     //     int phase_id = getPhaseID('J', code);
+//     //     switch (phase_id) {
+//     //         case '1':return 1; /* L1 */
+//     //         case '2':return 2; /* L2 */
+//     //         // case '5':return 3; /* L5 */
+//     //         // case '6':return 4; /* L6 */
+//     //     }
+//     // }
+//     else if (sys == SYS_BDS) {
+//         int phase_id = getPhaseID('C', code);
+//         // std::cout<<"phase_id(C): "<<phase_id<<";   code:"<<code <<std::endl;
+//         switch (phase_id) {
+//             case 1:  return 1; /* B2I */
+//             case 5: return 2;  /*B2*/
+//             case 7:  return 2; /* B2I/B2b */
+//             // case '5': *freq=FREQ5;     return 3; /* B2a */
+//             // case '6': *freq=FREQ3_CMP; return 4; /* B3 */
+//             // case '8': *freq=FREQ8;     return 5; /* B2ab */
+//         }
+//     }
+//     else if (sys == SYS_SBS) {
+//         int phase_id = getPhaseID('S', code);
+//         // std::cout<<"phase_id(S): "<<phase_id<<";   code:"<<code <<std::endl;
+//             switch (phase_id) {
+//             case 1:  return 1; /* L1 */
+//             case 5:  return 2; /* L5 */
+//         }
+//     }
+//     return 0;
+// }
+
 int UbloxMessageProcessor::sig_idx(const int sys, const int code)
 {
     if (sys == SYS_GPS) {
@@ -1340,31 +1510,43 @@ int UbloxMessageProcessor::sig_idx(const int sys, const int code)
 int UbloxMessageProcessor::ubx_sig(const int sys, const int sigid)
 {
     if (sys == SYS_GPS) {
+                // std::cout<< "sys: "<<sys<<"; sig_id: "<<sigid<<std::endl;
+
         if (sigid == 0) return CODE_L1C; /* L1C/A */
         if (sigid == 3) return CODE_L2L; /* L2CL */
         if (sigid == 4) return CODE_L2M; /* L2CM */
     }
     else if (sys == SYS_GLO) {
+                // std::cout<< "sys: "<<sys<<"; sigid: "<<sigid<<std::endl;
+
         if (sigid == 0) return CODE_L1C; /* G1C/A (GLO L1 OF) */
         if (sigid == 2) return CODE_L2C; /* G2C/A (GLO L2 OF) */
     }
     else if (sys == SYS_GAL) {
+                // std::cout<< "sys: "<<sys<<"; sigid: "<<sigid<<std::endl;
+
         if (sigid == 0) return CODE_L1C; /* E1C */
         if (sigid == 1) return CODE_L1B; /* E1B */
         if (sigid == 5) return CODE_L7I; /* E5bI */
         if (sigid == 6) return CODE_L7Q; /* E5bQ */
     }
     else if (sys == SYS_QZS) {
+                // std::cout<< "sys: "<<sys<<"; sigid: "<<sigid<<std::endl;
+
         if (sigid == 0) return CODE_L1C; /* L1C/A */
         if (sigid == 5) return CODE_L2L; /* L2CL (not specified in [5]) */
     }
     else if (sys == SYS_BDS) {
-        if (sigid == 0) return CODE_L1I; /* B1I D1 (rinex 3.02) */
-        if (sigid == 1) return CODE_L1I; /* B1I D2 (rinex 3.02) */
+        // std::cout<< "sys: "<<sys<<"; sigid: "<<sigid<<std::endl;
+
+        if (sigid == 0) return CODE_L2I; /* B1I D1 (rinex 3.02) */  //--sbs rinex 3.03
+        if (sigid == 1) return CODE_L2I; /* B1I D2 (rinex 3.02) */
         if (sigid == 2) return CODE_L7I; /* B2I D1 */
         if (sigid == 3) return CODE_L7I; /* B2I D2 */
     }
     else if (sys == SYS_SBS) {
+                // std::cout<< "sys: "<<sys<<"; sigid: "<<sigid<<std::endl;
+
         return CODE_L1C; /* L1C/A (not in [5]) */
     }
     return CODE_NONE;

@@ -33,6 +33,19 @@
 #include <gnss_comm/GnssTimePulseInfoMsg.h>
 #include <gnss_comm/StampedFloat64Array.h>
 
+// --sbs
+#include <gnss_comm/GlonassEphemeris.h>
+#include <gnss_comm/GnssAntennaPosition.h>
+#include <gnss_comm/GnssEphemerides.h>
+#include <gnss_comm/GnssIonosphereParameter.h>
+#include <gnss_comm/GnssObservations.h>
+#include <gnss_comm/GnssObservation.h>
+#include <gnss_comm/GnssSsrCodeBiases.h>
+#include <gnss_comm/GnssSsrPhaseBiases.h>
+#include <gnss_comm/GnssSsrEphemerides.h>
+#include <gnss_comm/GnssEphemMsgarray.h>
+
+
 #include "gnss_constant.hpp"
 #include "gnss_utility.hpp"
 
@@ -43,6 +56,13 @@ namespace gnss_comm
     * return : cooresponding ephemeris message
     *-----------------------------------------------------------------------------*/
     GnssEphemMsg ephem2msg(const EphemPtr &ephem_ptr);
+
+    /* convert Ephem struct to ros message ---------------------------------------
+    * args   : Ephem &  ephem      I   Ephemeris
+    * return : cooresponding ephemeris message
+    *-----------------------------------------------------------------------------*/
+    GnssEphemeris ephem2msg_ipnl(const EphemPtr &ephem_ptr);
+
 
     /* parse Ephem struct from ros message ----------------------------------------------
     * args   : GnssEphemConstPtr &  gnss_ephem_msg  I   Ephemeris ros message
@@ -56,6 +76,13 @@ namespace gnss_comm
     *-----------------------------------------------------------------------------*/
     GnssGloEphemMsg glo_ephem2msg(const GloEphemPtr &glo_ephem_ptr);
 
+    /* convert GloEphem struct to ros message ---------------------------------------
+    * args   : GloEphem &  glo_ephem      I   GLONASS Ephemeris
+    * return : cooresponding ephemeris message
+    *-----------------------------------------------------------------------------*/
+    GlonassEphemeris glo_ephem2msg_ipnl(const GloEphemPtr &glo_ephem_ptr);
+
+
     /* parse GloEphem struct from ros message ----------------------------------------------
     * args   : GnssGloEphemConstPtr & gnss_glo_ephem_msg  I   GLONASS Ephemeris ros message
     * return : cooresponding GLONASS ephemeris struct
@@ -67,6 +94,13 @@ namespace gnss_comm
     * return : cooresponding GNSS measurement message
     *-----------------------------------------------------------------------------*/
     GnssMeasMsg meas2msg(const std::vector<ObsPtr> &meas);
+
+    /* convert GNSS measurements to ros message ----------------------------------
+    * args   : std::vector<ObsPtr> & meas      I   GNSS measurements
+    * return : cooresponding GNSS measurement message
+    *-----------------------------------------------------------------------------*/
+    GnssObservations meas2msg_ipnl(const std::vector<ObsPtr> &meas);
+
 
     /* parse GNSS measurements from ros message ----------------------------------
     * args   : GnssMeasConstPtr & gnss_meas_msg      I   GNSS measurement message
@@ -109,6 +143,12 @@ namespace gnss_comm
     * return : cooresponding GNSS space vehicle info message
     *-----------------------------------------------------------------------------*/
     GnssSvsMsg svs2msg(const std::vector<SvInfo> &svs);
+
+    // Convert code type to rinex type string
+    std::string codeTypeToRinexType(const char system, const int code_type);
+    // Get a phase ID
+    int getPhaseID(char system, int code_type);
+
 
 }   // namespace gnss_comm
 

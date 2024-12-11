@@ -43,6 +43,9 @@
 
 namespace gnss_comm
 {
+
+    #define U1(p) (*((uint8_t *)(p)))   
+    
     // some parameters are adapted from RTKLIB
     #define MAXFREQ     7                   /* max N_FREQ */
 
@@ -198,7 +201,219 @@ namespace gnss_comm
     #define CODE_L3X    46                  /* obs code: G3I+Q      (GLO) */
     #define CODE_L1I    47                  /* obs code: B1I        (BDS) */
     #define CODE_L1Q    48                  /* obs code: B1Q        (BDS) */
-    #define MAXCODE     48                  /* max number of obs code */
+    #define CODE_L5A    49                  /* obs code: L5A SPS    (IRN) */
+    #define CODE_L5B    50                  /* obs code: L5B RS(D)  (IRN) */
+    #define CODE_L5C    51                  /* obs code: L5C RS(P)  (IRN) */
+    #define CODE_L9A    52                  /* obs code: SA SPS     (IRN) */
+    #define CODE_L9B    53                  /* obs code: SB RS(D)   (IRN) */
+    #define CODE_L9C    54                  /* obs code: SC RS(P)   (IRN) */
+    #define CODE_L9X    55                  /* obs code: SB+C       (IRN) */
+    #define CODE_L1D    56                  /* obs code: B1D        (BDS) */
+    #define CODE_L5D    57                  /* obs code: L5D(L5S),B2aD (QZS,BDS) */
+    #define CODE_L5P    58                  /* obs code: L5P(L5S),B2aP (QZS,BDS) */
+    #define CODE_L5Z    59                  /* obs code: L5D+P(L5S) (QZS) */
+    #define CODE_L6E    60                  /* obs code: L6E        (QZS) */
+    #define CODE_L7D    61                  /* obs code: B2bD       (BDS) */
+    #define CODE_L7P    62                  /* obs code: B2bP       (BDS) */
+    #define CODE_L7Z    63                  /* obs code: B2bD+P     (BDS) */
+    #define CODE_L8D    64                  /* obs code: B2abD      (BDS) */
+    #define CODE_L8P    65                  /* obs code: B2abP      (BDS) */
+    #define CODE_L4A    66                  /* obs code: G1aL1OCd   (GLO) */
+    #define CODE_L4B    67                  /* obs code: G1aL1OCd   (GLO) */
+    #define CODE_L4X    68                  /* obs code: G1al1OCd+p (GLO) */
+    #define MAXCODE     68                  /* max number of obs code */
+    // add code type from 48 to 68 --sbs
+
+    // Rinex and code type maps
+    // Users should define the MAP operation --sbs
+    #define RINEX_TO_CODE_MAPS \
+      MAP('G', "1C", CODE_L1C); \
+      MAP('G', "1S", CODE_L1S); \
+      MAP('G', "1L", CODE_L1L); \
+      MAP('G', "1X", CODE_L1X); \
+      MAP('G', "1P", CODE_L1P); \
+      MAP('G', "1W", CODE_L1W); \
+      MAP('G', "1Y", CODE_L1Y); \
+      MAP('G', "1M", CODE_L1M); \
+      MAP('G', "2C", CODE_L2C); \
+      MAP('G', "2D", CODE_L2D); \
+      MAP('G', "2S", CODE_L2S); \
+      MAP('G', "2L", CODE_L2L); \
+      MAP('G', "2X", CODE_L2X); \
+      MAP('G', "2P", CODE_L2P); \
+      MAP('G', "2W", CODE_L2W); \
+      MAP('G', "2Y", CODE_L2Y); \
+      MAP('G', "2M", CODE_L2M); \
+      MAP('G', "5I", CODE_L5I); \
+      MAP('G', "5Q", CODE_L5Q); \
+      MAP('G', "5X", CODE_L5X); \
+      MAP('R', "1C", CODE_L1C); \
+      MAP('R', "1P", CODE_L1P); \
+      MAP('R', "4A", CODE_L4A); \
+      MAP('R', "4B", CODE_L4B); \
+      MAP('R', "4X", CODE_L4X); \
+      MAP('R', "2C", CODE_L2C); \
+      MAP('R', "2P", CODE_L2P); \
+      MAP('R', "6A", CODE_L6A); \
+      MAP('R', "6B", CODE_L6B); \
+      MAP('R', "6X", CODE_L6X); \
+      MAP('R', "3I", CODE_L3I); \
+      MAP('R', "3Q", CODE_L3Q); \
+      MAP('R', "3X", CODE_L3X); \
+      MAP('E', "1A", CODE_L1A); \
+      MAP('E', "1B", CODE_L1B); \
+      MAP('E', "1C", CODE_L1C); \
+      MAP('E', "1X", CODE_L1X); \
+      MAP('E', "1Z", CODE_L1Z); \
+      MAP('E', "5I", CODE_L5I); \
+      MAP('E', "5Q", CODE_L5Q); \
+      MAP('E', "5X", CODE_L5X); \
+      MAP('E', "7I", CODE_L7I); \
+      MAP('E', "7Q", CODE_L7Q); \
+      MAP('E', "7X", CODE_L7X); \
+      MAP('E', "8I", CODE_L8I); \
+      MAP('E', "8Q", CODE_L8Q); \
+      MAP('E', "8X", CODE_L8X); \
+      MAP('E', "6A", CODE_L6A); \
+      MAP('E', "6B", CODE_L6B); \
+      MAP('E', "6C", CODE_L6C); \
+      MAP('E', "6X", CODE_L6X); \
+      MAP('E', "6Z", CODE_L6Z); \
+      MAP('C', "2I", CODE_L2I); \
+      MAP('C', "2Q", CODE_L2Q); \
+      MAP('C', "2X", CODE_L2X); \
+      MAP('C', "1D", CODE_L1D); \
+      MAP('C', "1P", CODE_L1P); \
+      MAP('C', "1X", CODE_L1X); \
+      MAP('C', "1S", CODE_L1S); \
+      MAP('C', "1L", CODE_L1L); \
+      MAP('C', "1Z", CODE_L1Z); \
+      MAP('C', "5D", CODE_L5D); \
+      MAP('C', "5P", CODE_L5P); \
+      MAP('C', "5X", CODE_L5X); \
+      MAP('C', "7I", CODE_L7I); \
+      MAP('C', "7Q", CODE_L7Q); \
+      MAP('C', "7X", CODE_L7X); \
+      MAP('C', "7D", CODE_L7D); \
+      MAP('C', "7P", CODE_L7P); \
+      MAP('C', "7Z", CODE_L7Z); \
+      MAP('C', "8D", CODE_L8D); \
+      MAP('C', "8P", CODE_L8P); \
+      MAP('C', "8X", CODE_L8X); \
+      MAP('C', "6I", CODE_L6I); \
+      MAP('C', "6Q", CODE_L6Q); \
+      MAP('C', "6X", CODE_L6X); \
+      MAP('C', "6Z", CODE_L6Z);
+
+
+
+    // Phase channels 
+    #define PHASE_NONE 0
+    #define PHASE_L1   1
+    #define PHASE_L2   2
+    #define PHASE_L5   3
+    #define PHASE_G1   1
+    #define PHASE_G1A  2
+    #define PHASE_G2   3
+    #define PHASE_G2A  4
+    #define PHASE_G3   5
+    #define PHASE_E1   1
+    #define PHASE_E5A  2
+    #define PHASE_E5B  3
+    #define PHASE_E5   4
+    #define PHASE_E6   5
+    #define PHASE_B1   1
+    #define PHASE_B1C  2
+    #define PHASE_B1A  3
+    #define PHASE_B2A  4
+    #define PHASE_B2   5
+    #define PHASE_B2B  6
+    #define PHASE_B2AB 7
+    #define PHASE_B3   8
+    #define PHASE_B3A  9
+
+    // Code type to phase channel maps
+    #define CODE_TO_PHASE_CHANNEL_MAPS \
+      MAP('G', CODE_L1C, PHASE_L1); \
+      MAP('G', CODE_L1S, PHASE_L1); \
+      MAP('G', CODE_L1L, PHASE_L1); \
+      MAP('G', CODE_L1X, PHASE_L1); \
+      MAP('G', CODE_L1P, PHASE_L1); \
+      MAP('G', CODE_L1W, PHASE_L1); \
+      MAP('G', CODE_L1Y, PHASE_L1); \
+      MAP('G', CODE_L1M, PHASE_L1); \
+      MAP('G', CODE_L2C, PHASE_L2); \
+      MAP('G', CODE_L2D, PHASE_L2); \
+      MAP('G', CODE_L2S, PHASE_L2); \
+      MAP('G', CODE_L2L, PHASE_L2); \
+      MAP('G', CODE_L2X, PHASE_L2); \
+      MAP('G', CODE_L2P, PHASE_L2); \
+      MAP('G', CODE_L2W, PHASE_L2); \
+      MAP('G', CODE_L2Y, PHASE_L2); \
+      MAP('G', CODE_L2M, PHASE_L2); \
+      MAP('G', CODE_L5I, PHASE_L5); \
+      MAP('G', CODE_L5Q, PHASE_L5); \
+      MAP('G', CODE_L5X, PHASE_L5); \
+      MAP('R', CODE_L1C, PHASE_G1); \
+      MAP('R', CODE_L1P, PHASE_G1); \
+      MAP('R', CODE_L4A, PHASE_G1A); \
+      MAP('R', CODE_L4B, PHASE_G1A); \
+      MAP('R', CODE_L4X, PHASE_G1A); \
+      MAP('R', CODE_L2C, PHASE_G2); \
+      MAP('R', CODE_L2P, PHASE_G2); \
+      MAP('R', CODE_L6A, PHASE_G2A); \
+      MAP('R', CODE_L6B, PHASE_G2A); \
+      MAP('R', CODE_L6X, PHASE_G2A); \
+      MAP('R', CODE_L3I, PHASE_G3); \
+      MAP('R', CODE_L3Q, PHASE_G3); \
+      MAP('R', CODE_L3X, PHASE_G3); \
+      MAP('E', CODE_L1A, PHASE_E1); \
+      MAP('E', CODE_L1B, PHASE_E1); \
+      MAP('E', CODE_L1C, PHASE_E1); \
+      MAP('E', CODE_L1X, PHASE_E1); \
+      MAP('E', CODE_L1Z, PHASE_E1); \
+      MAP('E', CODE_L5I, PHASE_E5A); \
+      MAP('E', CODE_L5Q, PHASE_E5A); \
+      MAP('E', CODE_L5X, PHASE_E5A); \
+      MAP('E', CODE_L7I, PHASE_E5B); \
+      MAP('E', CODE_L7Q, PHASE_E5B); \
+      MAP('E', CODE_L7X, PHASE_E5B); \
+      MAP('E', CODE_L8I, PHASE_E5); \
+      MAP('E', CODE_L8Q, PHASE_E5); \
+      MAP('E', CODE_L8X, PHASE_E5); \
+      MAP('E', CODE_L6A, PHASE_E6); \
+      MAP('E', CODE_L6B, PHASE_E6); \
+      MAP('E', CODE_L6C, PHASE_E6); \
+      MAP('E', CODE_L6X, PHASE_E6); \
+      MAP('E', CODE_L6Z, PHASE_E6); \
+      MAP('C', CODE_L2I, PHASE_B1); \
+      MAP('C', CODE_L2Q, PHASE_B1); \
+      MAP('C', CODE_L2X, PHASE_B1); \
+      MAP('C', CODE_L1D, PHASE_B1C); \
+      MAP('C', CODE_L1P, PHASE_B1C); \
+      MAP('C', CODE_L1X, PHASE_B1C); \
+      MAP('C', CODE_L1S, PHASE_B1A); \
+      MAP('C', CODE_L1L, PHASE_B1A); \
+      MAP('C', CODE_L1Z, PHASE_B1A); \
+      MAP('C', CODE_L5D, PHASE_B2A); \
+      MAP('C', CODE_L5P, PHASE_B2A); \
+      MAP('C', CODE_L5X, PHASE_B2A); \
+      MAP('C', CODE_L7I, PHASE_B2); \
+      MAP('C', CODE_L7Q, PHASE_B2); \
+      MAP('C', CODE_L7X, PHASE_B2); \
+      MAP('C', CODE_L7D, PHASE_B2B); \
+      MAP('C', CODE_L7P, PHASE_B2B); \
+      MAP('C', CODE_L7Z, PHASE_B2B); \
+      MAP('C', CODE_L8D, PHASE_B2AB); \
+      MAP('C', CODE_L8P, PHASE_B2AB); \
+      MAP('C', CODE_L8X, PHASE_B2AB); \
+      MAP('C', CODE_L6I, PHASE_B3); \
+      MAP('C', CODE_L6Q, PHASE_B3); \
+      MAP('C', CODE_L6X, PHASE_B3); \
+      MAP('C', CODE_L6Z, PHASE_B3A);
+
+
+
 
     #define EARTH_ECCE_2            6.69437999014e-3    // WGS 84 (Earth eccentricity)^2 (m^2)
     #define EARTH_MEAN_RADIUS       6371009             // Mean R of ellipsoid(m) IU Gedosey& Geophysics

@@ -10,7 +10,7 @@ rtcm_tcp_port: 3503
 config_receiver_at_start: 0     # whether to config receiver during booting, ** NOT SUPPORT YET **
 receiver_config_filepath: "~/catkin_ws/src/ublox_driver/config/ublox_rcv_config.yaml"
 ## if `online == 0` then following options may be set, `serial_baud_rate` is used for speed control
-ubx_filepath: "~/tmp/ublox_driver_test/2020_11_30_7_14_33.ubx"
+ubx_filepath: "/media/aae/update-usb/data/20231226-taipei/2/obs/231226_040300.ubx"
 rtk_correction_ecef:      # apply RTK correction in case of the position of base station reported in RTCM is biased
     rows: 3
     cols: 1
@@ -19,7 +19,7 @@ rtk_correction_ecef:      # apply RTK correction in case of the position of base
 
 # output options
 to_ros: 1           # publish as ros topic
-to_file: 0          # dump data to file
-dump_dir: "~/tmp/ublox_driver_test/"      # dump data to this directory, if applicable
+to_file: 1         # dump data to file
+dump_dir: "~/"      # dump data to this directory, if applicable
 to_serial: 0        # output data to serial port, for debugging purpose
 output_serial_port: "/dev/ttyACM0"                  # dump data to this serial port, if applicable

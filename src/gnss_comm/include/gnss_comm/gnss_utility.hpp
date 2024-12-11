@@ -58,6 +58,15 @@ namespace gnss_comm
     *-----------------------------------------------------------------------------*/
     uint32_t sat_no(uint32_t sys, uint32_t prn);
 
+    //  satellite number to satellite id --sbs
+    /* satellite number to satellite id --------------------------------------------
+    * convert satellite number to satellite id
+    * args   : int    sat       I   satellite number
+    *          char   *id       O   satellite id (Gnn,Rnn,Enn,Jnn,Cnn)
+    * return : none
+    *-----------------------------------------------------------------------------*/
+    uint32_t sat_id(uint32_t sat, char *id);
+
     /* satellite number to satellite system ----------------------------------------
     * convert satellite number to satellite system
     * args   : uint32_t    sat       I   satellite number (1-MAXSAT)
@@ -124,7 +133,22 @@ namespace gnss_comm
     * return : time of week in bdt (s)
     *-----------------------------------------------------------------------------*/
     double time2bdt(gtime_t t, int *week);
-
+    /* gpstime to bdt --------------------------------------------------------------
+    * convert gpstime to bdt (beidou navigation satellite system time)
+    * args   : gtime_t t        I   time expressed in gpstime
+    * return : time expressed in bdt
+    * notes  : ref [8] 3.3, 2006/1/1 00:00 BDT = 2006/1/1 00:00 UTC
+    *          no leap seconds in BDT
+    *          ignore slight time offset under 100 ns
+    *-----------------------------------------------------------------------------*/
+    gtime_t gpst2bdt(gtime_t t);
+    /* add time --------------------------------------------------------------------
+    * add time to gtime_t struct
+    * args   : gtime_t t        I   gtime_t struct
+    *          double sec       I   time to add (s)
+    * return : gtime_t struct (t+sec)
+    *-----------------------------------------------------------------------------*/
+    gtime_t timeadd(gtime_t t, double sec);
     /* gpstime to utc --------------------------------------------------------------
     * convert gpstime to utc considering leap seconds
     * args   : gtime_t t        I   time expressed in gpstime

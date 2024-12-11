@@ -24,6 +24,22 @@ add_message_files(FILES
     GnssSvsMsg.msg
     GnssTimePulseInfoMsg.msg
     StampedFloat64Array.msg
+
+    GlonassEphemeris.msg
+    GnssAntennaPosition.msg
+    GnssEphemerides.msg
+    GnssEphemeris.msg
+    GnssIonosphereParameter.msg
+    GnssObservation.msg
+    GnssObservations.msg
+    GnssSsrCodeBias.msg
+    GnssSsrCodeBiases.msg
+    GnssSsrEphemerides.msg
+    GnssSsrEphemeris.msg
+    GnssSsrPhaseBias.msg
+    GnssSsrPhaseBiases.msg
+    GnssEphemMsgarray.msg
+
 )
 
 generate_messages(

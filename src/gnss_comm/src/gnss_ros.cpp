@@ -22,6 +22,9 @@
 
 namespace gnss_comm
 {
+    
+
+       /* transfer the ephemrics (from RINEX) to rosmsg */
     GnssEphemMsg ephem2msg(const EphemPtr &ephem_ptr)
     {
         GnssEphemMsg ephem_msg;
@@ -69,6 +72,7 @@ namespace gnss_comm
         return ephem_msg;
     }
 
+    /* transfer the rosmsg to the ephemrics (from RINEX) */
     EphemPtr msg2ephem(const GnssEphemMsgConstPtr &gnss_ephem_msg)
     {
         EphemPtr ephem(new Ephem());
@@ -107,7 +111,8 @@ namespace gnss_comm
         ephem->n_dot = gnss_ephem_msg->n_dot;
         return ephem;
     }
-
+    
+    /* transfer the GLONASS ephemrics (from RINEX) to rosmsg */
     GnssGloEphemMsg glo_ephem2msg(const GloEphemPtr &glo_ephem_ptr)
     {
         GnssGloEphemMsg glo_ephem_msg;
@@ -139,7 +144,8 @@ namespace gnss_comm
         glo_ephem_msg.delta_tau_n = glo_ephem_ptr->delta_tau_n;
         return glo_ephem_msg;
     }
-
+    
+    /* transfer the GLONASS rosmsg to the ephemrics (from RINEX) */
     GloEphemPtr msg2glo_ephem(const GnssGloEphemMsgConstPtr &gnss_glo_ephem_msg)
     {
         GloEphemPtr glo_ephem(new GloEphem());
@@ -166,6 +172,7 @@ namespace gnss_comm
         return glo_ephem;
     }
 
+    /* transfer the raw gnss (RINEX) measurements to the ros msg */
     GnssMeasMsg meas2msg(const std::vector<ObsPtr> &meas)
     {
         GnssMeasMsg gnss_meas_msg;
@@ -194,6 +201,7 @@ namespace gnss_comm
         return gnss_meas_msg;
     }
 
+    /* transfer the gnss measurements ros to the RINEX */
     std::vector<ObsPtr> msg2meas(const GnssMeasMsgConstPtr &gnss_meas_msg)
     {
         std::vector<ObsPtr> meas;
@@ -218,6 +226,157 @@ namespace gnss_comm
             meas.push_back(obs);
         }
         return meas;
+    }
+
+    // Convert code type to rinex type string
+    std::string codeTypeToRinexType(const char system, const int code_type)
+    {
+    #define MAP(S, R, C) \
+      if (system == S && code_type == C) { return R; }
+      RINEX_TO_CODE_MAPS;
+    #undef MAP
+
+    //   LOG(FATAL) << "Invalid code type for system " << system << ": " << code_type << "!";
+
+      return "";
+    }
+
+    // Get a phase ID
+    int getPhaseID(char system, int code_type)
+    {
+    #define MAP(S, C, P) \
+      if (system == S && code_type == C) { return P; }
+      CODE_TO_PHASE_CHANNEL_MAPS;
+    #undef MAP
+    
+      return PHASE_NONE;
+    }
+
+    GnssEphemeris ephem2msg_ipnl(const EphemPtr &ephem_ptr)
+    {
+        GnssEphemeris e;
+        char prn_buf[5];
+        sat_id(ephem_ptr->sat, prn_buf);
+        e.prn = prn_buf;
+
+        // e.week = ephem_ptr->week;
+
+        
+        if(e.prn[0] =='C')
+        {
+            int week = 0;
+            e.toes = time2bdt(gpst2bdt(ephem_ptr->toe), &week);
+            e.toc = time2bdt(gpst2bdt(ephem_ptr->toc), &week);
+            e.week = week;
+        }
+        else{
+            uint32_t week = 0;
+            e.toes = time2gpst(ephem_ptr->toe, &week);
+            e.toc = time2gpst(ephem_ptr->toc, &week);
+            e.week = week;
+        }
+        e.iode = ephem_ptr->iode;
+        e.iodc = ephem_ptr->iodc;
+        e.svh = ephem_ptr->health;
+        e.code = ephem_ptr->code;
+        e.sva = ephem_ptr->ura;
+        e.A = ephem_ptr->A;
+        e.e = ephem_ptr->e;
+        e.i0 = ephem_ptr->i0;
+        e.omg = ephem_ptr->omg;
+        e.OMG0 = ephem_ptr->OMG0;
+        e.M0 = ephem_ptr->M0;
+        e.deln = ephem_ptr->delta_n;
+        e.OMGd = ephem_ptr->OMG_dot;
+        e.idot = ephem_ptr->i_dot;
+        e.cuc = ephem_ptr->cuc;
+        e.cus = ephem_ptr->cus;
+        e.crc = ephem_ptr->crc;
+        e.crs = ephem_ptr->crs;
+        e.cic = ephem_ptr->cic;
+        e.cis = ephem_ptr->cis;
+        e.f0 = ephem_ptr->af0;
+        e.f1 = ephem_ptr->af1;
+        e.f2 = ephem_ptr->af2;
+        e.tgd.push_back(ephem_ptr->tgd[0]);
+        e.tgd.push_back(ephem_ptr->tgd[1]);
+
+        return e;
+    }
+
+
+    GlonassEphemeris glo_ephem2msg_ipnl(const GloEphemPtr &glo_ephem_ptr)
+    {
+        GlonassEphemeris e;
+        uint32_t week = 0;
+        double tow = 0.0;
+        char prn_buf[5];
+        sat_id(glo_ephem_ptr->sat, prn_buf);
+        e.prn = prn_buf;
+        tow = time2gpst(glo_ephem_ptr->ttr, &week);
+        e.week = week;
+        e.tof = tow;
+        tow = time2gpst(glo_ephem_ptr->toe, &week);
+        e.toe = tow;
+        e.frq = glo_ephem_ptr->freqo;
+        e.iode = glo_ephem_ptr->iode;
+        e.svh = glo_ephem_ptr->health;
+        e.age = glo_ephem_ptr->age;
+        // e.sva = glo_ephem_ptr->ura;
+        e.pos.push_back(glo_ephem_ptr->pos[0]);
+        e.pos.push_back(glo_ephem_ptr->pos[1]);
+        e.pos.push_back(glo_ephem_ptr->pos[2]);
+        e.vel.push_back(glo_ephem_ptr->vel[0]);
+        e.vel.push_back(glo_ephem_ptr->vel[1]);
+        e.vel.push_back(glo_ephem_ptr->vel[2]);
+        e.acc.push_back(glo_ephem_ptr->acc[0]);
+        e.acc.push_back(glo_ephem_ptr->acc[1]);
+        e.acc.push_back(glo_ephem_ptr->acc[2]);
+        e.taun = glo_ephem_ptr->tau_n;
+        e.gamn = glo_ephem_ptr->gamma;
+        e.dtaun = glo_ephem_ptr->delta_tau_n;
+        return e;
+    }
+
+
+    // --sbs
+    GnssObservations meas2msg_ipnl(const std::vector<ObsPtr> &meas)
+    {
+        GnssObservations gnss_meas_msg;
+        for (ObsPtr obs : meas)
+        {
+            GnssObservation obs_msg;
+            uint32_t week = 0;
+            double tow = time2gpst(obs->time, &week);
+            obs_msg.week = week;
+            obs_msg.tow = tow;
+            char prn_buf[5];
+            sat_id(obs->sat, prn_buf);
+            obs_msg.prn = prn_buf;
+            // obs_msg.freqs   = obs->freqs;
+            obs_msg.SNR     = obs->CN0;
+            for(auto& SNR :  obs_msg.SNR  )
+            {
+                SNR *= 1000;   //--sbs
+            }
+            obs_msg.LLI     = obs->LLI;
+            for(auto& code : obs->code)
+            {
+                obs_msg.code.push_back(codeTypeToRinexType(obs_msg.prn[0], code));
+            }
+            // obs_msg.code.push_back(gnss_common::codeTypeToRinexType(o.prn[0], obs->code[j]));
+            // obs_msg.code    = obs->code;   ///?? 
+            obs_msg.P     = obs->psr;
+            // obs_msg.psr_std = obs->psr_std;
+            obs_msg.L      = obs->cp;
+            // obs_msg.cp_std  = obs->cp_std;
+            obs_msg.D    = obs->dopp;
+            // obs_msg.dopp_std = obs->dopp_std;
+            // obs_msg.status  = obs->status;
+
+            gnss_meas_msg.observations.push_back(obs_msg);
+        }
+        return gnss_meas_msg;
     }
 
     GnssTimePulseInfoMsg tp_info2msg(const TimePulseInfoPtr &tp_info)
