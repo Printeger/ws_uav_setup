@@ -265,10 +265,11 @@ void Init::initNodeFrame3(NProtocolExtracter *protocol_extraction) {
     auto now = std::chrono::system_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch());
     uint64_t unix_timestamp = duration.count();
-
+    
+    msg_data.header.stamp = ros::Time::now();
     msg_data.role = data.role;
     msg_data.id = data.id;
-    msg_data.local_time = unix_timestamp;
+    // msg_data.local_time = unix_timestamp;
     // msg_data.local_time = data.local_time;
     msg_data.system_time = data.system_time;
     msg_data.voltage = data.voltage;
