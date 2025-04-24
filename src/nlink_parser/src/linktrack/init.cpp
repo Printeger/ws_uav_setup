@@ -270,7 +270,7 @@ void Init::initNodeFrame3(NProtocolExtracter *protocol_extraction) {
     msg_data.role = data.role;
     msg_data.id = data.id;
     // msg_data.local_time = unix_timestamp;
-    // msg_data.local_time = data.local_time;
+    msg_data.local_time = data.local_time;
     msg_data.system_time = data.system_time;
     msg_data.voltage = data.voltage;
 
